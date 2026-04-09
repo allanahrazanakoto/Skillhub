@@ -1,0 +1,11 @@
+vendor
+node_modules
+npm-debug.log
+yarn-error.log
+.env
+.env.*
+/storage
+/database/database.sqlite
+/tests
+/.github
+.DS_Store

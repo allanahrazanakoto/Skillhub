@@ -1,0 +1,46 @@
+version: '3.9'
+
+services:
+  api:
+    build:
+      context: ./skillhub_back
+    container_name: skillhub_back
+    ports:
+      - "8000:8000"
+    environment:
+      APP_ENV: local
+      APP_DEBUG: 'true'
+      APP_URL: http://localhost:8000
+      DB_CONNECTION: sqlite
+      DB_DATABASE: /var/www/html/database/database.sqlite
+      MONGODB_URI: mongodb://mongo:27017
+      MONGODB_DB: skillhub_activity_log
+      MONGODB_COLLECTION: activity_logs
+    volumes:
+      - ./skillhub_back/storage:/var/www/html/storage
+    depends_on:
+      - mongo
+
+  mongo:
+    image: mongo:7.0
+    container_name: skillhub_mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+  frontend:
+    build:
+      context: ./skillhub_front
+      args:
+        VITE_API_URL: http://api:8000
+    container_name: skillhub_front
+    ports:
+      - "5173:80"
+    environment:
+      VITE_API_URL: http://api:8000
+    depends_on:
+      - api
+
+volumes:
+  mongo-data:

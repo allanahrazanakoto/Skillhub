@@ -1,0 +1,76 @@
+name: CI / CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v4
+        with:
+          php-version: 8.2
+          extensions: bcmath, intl, pdo, pdo_mysql, pdo_sqlite, zip, mongodb
+      - name: Cache Composer
+        uses: actions/cache@v4
+        with:
+          path: ~/.composer/cache
+          key: composer-${{ hashFiles('skillhub_back/composer.lock') }}
+          restore-keys: composer-
+      - name: Install backend dependencies
+        working-directory: skillhub_back
+        run: composer install --no-progress --no-suggest --prefer-dist --no-interaction
+      - name: Prepare backend env
+        working-directory: skillhub_back
+        run: |
+          cp .env.example .env
+          php artisan key:generate --ansi
+      - name: Run backend tests
+        working-directory: skillhub_back
+        run: php artisan test
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+      - name: Install frontend dependencies
+        working-directory: skillhub_front
+        run: npm ci
+      - name: Run lint
+        working-directory: skillhub_front
+        run: npm run lint
+      - name: Build frontend
+        working-directory: skillhub_front
+        run: npm run build
+
+  docker-build:
+    needs: [backend, frontend]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./skillhub_back
+          file: ./skillhub_back/Dockerfile
+          push: false
+          tags: skillhub-back:ci
+      - name: Build frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./skillhub_front
+          file: ./skillhub_front/Dockerfile
+          push: false
+          tags: skillhub-front:ci
