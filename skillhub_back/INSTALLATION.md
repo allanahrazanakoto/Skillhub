@@ -27,11 +27,3 @@ php artisan migrate
 # (Optionnel) Exécuter les seeders si vous voulez des données de test
 
 php artisan db:seed
-
-# Installer les dépendances JavaScript (pour les assets Laravel)
-
-npm install
-
-# Compiler les assets (pour la production) ou lancer en mode dev
-
-npm run build # ou npm run dev pour le développement
