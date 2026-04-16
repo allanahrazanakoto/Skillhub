@@ -5,6 +5,11 @@ import react from '@vitejs/plugin-react'
 // En dev, /api et /storage sont redirigés vers le backend (ex. Laravel sur :8000)
 export default defineConfig({
   plugins: [react()],
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: './src/test/setup.js',
+  },
   server: {
     proxy: {
       '/api': {
