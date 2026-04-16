@@ -1,5 +1,6 @@
 # CI uniquement sur la branche dev (aucun déclenchement sur main).
 # CD (push GHCR) : uniquement sur push vers dev — nécessite permissions packages: write (GITHUB_TOKEN).
+# Si tous les fichiers modifiés sont ignorés (paths-ignore), le workflow ne s'exécute pas.
 
 name: CI Pipeline
 
@@ -7,9 +8,15 @@ on:
   push:
     branches:
       - dev
+    paths-ignore:
+      - "**/*.md"
+      - "Doc/**"
   pull_request:
     branches:
       - dev
+    paths-ignore:
+      - "**/*.md"
+      - "Doc/**"
 
 permissions:
   contents: read
