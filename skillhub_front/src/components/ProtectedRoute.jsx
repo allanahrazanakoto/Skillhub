@@ -33,6 +33,7 @@ export default function ProtectedRoute({ children, role }) {
           return;
         }
         if (utilisateur.role !== role) {
+          authApi.removeToken();
           setVerification({ ok: false, loading: false });
           return;
         }

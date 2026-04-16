@@ -74,6 +74,58 @@ export const formationsApi = {
     return json.formation;
   },
 
+  async getModules(formationId) {
+    const res = await fetch(`${API_URL}/formations/${formationId}/modules`, {
+      headers: getAuthHeaders(),
+    });
+    const json = await parseJsonResponse(res);
+    if (!res.ok) throw { status: res.status, ...json };
+    return json.modules ?? [];
+  },
+
+  async createModule(formationId, data) {
+    const res = await fetch(`${API_URL}/formations/${formationId}/modules`, {
+      method: "POST",
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    const json = await parseJsonResponse(res);
+    if (!res.ok) throw { status: res.status, ...json };
+    return json.module;
+  },
+
+  async updateModule(moduleId, data) {
+    const res = await fetch(`${API_URL}/modules/${moduleId}`, {
+      method: "PUT",
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    const json = await parseJsonResponse(res);
+    if (!res.ok) throw { status: res.status, ...json };
+    return json.module;
+  },
+
+  async deleteModule(moduleId) {
+    const res = await fetch(`${API_URL}/modules/${moduleId}`, {
+      method: "DELETE",
+      headers: getAuthHeaders(),
+    });
+    const json = await parseJsonResponse(res);
+    if (!res.ok) throw { status: res.status, ...json };
+    return json;
+  },
+
+  async updateModuleCompletion(formationId, moduleId, estFait) {
+    const res = await fetch(`${API_URL}/formations/${formationId}/modules/${moduleId}/completion`, {
+      method: "PUT",
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ est_fait: !!estFait }),
+    });
+    const json = await parseJsonResponse(res);
+    if (!res.ok) throw { status: res.status, ...json };
+    return { module: json.module, progression: json.progression };
+  },
+
   async createFormation(data) {
     const isFormData = data instanceof FormData;
     const res = await fetch(`${API_URL}/formations`, {

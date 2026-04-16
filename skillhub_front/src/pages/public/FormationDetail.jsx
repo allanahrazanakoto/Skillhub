@@ -68,6 +68,7 @@ export default function FormationDetail() {
   }
 
   const niveauLabel = LEVEL_LABELS[formation.level] || formation.levelLabel || formation.level;
+  const modules = Array.isArray(formation.modules) ? formation.modules : [];
 
   return (
     <>
@@ -117,6 +118,21 @@ export default function FormationDetail() {
               </div>
             </div>
           </div>
+
+          <section className="mt-4">
+            <h2>Modules</h2>
+            {modules.length === 0 ? (
+              <p className="text-muted mb-0">Aucun module disponible pour le moment.</p>
+            ) : (
+              <ul className="mb-0">
+                {modules.map((m, index) => (
+                  <li key={m.id}>
+                    <strong>Module {m.ordre || index + 1}</strong> - {m.titre}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
         </div>
       </main>
       <Footer />

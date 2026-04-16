@@ -15,6 +15,7 @@ import "./App.css";
 const Home = lazy(() => import("./pages/espace-formateur/Home"));
 const MesAteliers = lazy(() => import("./pages/espace-formateur/MesAteliers"));
 const GestionAteliers = lazy(() => import("./pages/espace-formateur/GestionAteliers"));
+const FormationDetailFormateur = lazy(() => import("./pages/espace-formateur/FormationDetailFormateur"));
 
 function App() {
   return (
@@ -64,6 +65,14 @@ function App() {
           element={
             <ProtectedRoute role="formateur">
               <GestionAteliers />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/formateur/formation/:id"
+          element={
+            <ProtectedRoute role="formateur">
+              <FormationDetailFormateur />
             </ProtectedRoute>
           }
         />

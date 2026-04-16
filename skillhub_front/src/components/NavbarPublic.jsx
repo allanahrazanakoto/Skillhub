@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { authApi } from "../api/auth";
 import logoSkillhub from "../assets/logo/sk.png";
@@ -7,8 +7,22 @@ import "./css/navbar-skillhub.css";
 export default function NavbarPublic() {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [sessionValide, setSessionValide] = useState(true);
+  const token = authApi.getToken();
   const utilisateur = authApi.getUtilisateur();
-  const estConnecte = !!utilisateur;
+  const roleValide = utilisateur?.role === "participant" || utilisateur?.role === "formateur";
+  const estConnecte = Boolean(token && utilisateur && roleValide && sessionValide);
+
+  useEffect(() => {
+    // Evite les états incohérents en nettoyant une session partielle (utilisateur sans token) ou avec rôle non autorisé.
+    if ((!token && utilisateur) || (utilisateur && !roleValide)) {
+      authApi.removeToken();
+      authApi.setUtilisateur(null);
+      setSessionValide(false);
+      return;
+    }
+    setSessionValide(true);
+  }, [token, utilisateur, roleValide]);
 
   const handleDeconnexion = async () => {
     try {
@@ -20,7 +34,12 @@ export default function NavbarPublic() {
     }
   };
 
-  const dashboardPath = utilisateur?.role === "formateur" ? "/dashboard/formateur" : "/dashboard/apprenant";
+  const dashboardPath =
+    utilisateur?.role === "formateur"
+      ? "/dashboard/formateur"
+      : utilisateur?.role === "participant"
+        ? "/dashboard/apprenant"
+        : "/connexion";
   const profilLabel = utilisateur ? [utilisateur.prenom, utilisateur.nom].filter(Boolean).join(" ") || utilisateur.email : "";
 
   const closeMenu = () => setMenuOpen(false);

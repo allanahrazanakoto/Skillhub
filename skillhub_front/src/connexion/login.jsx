@@ -29,9 +29,19 @@ function Login() {
     setChargement(true);
     try {
       const res = await authApi.connexion(formData);
+      const role = res.utilisateur?.role;
+      const roleAutorise = role === "formateur" || role === "participant";
+
+      if (!roleAutorise) {
+        authApi.removeToken();
+        authApi.setUtilisateur(null);
+        setErreur("Ce compte n'est pas autorisé sur cette interface.");
+        return;
+      }
+
       authApi.setToken(res.token);
       authApi.setUtilisateur(res.utilisateur);
-      const dashboard = res.utilisateur?.role === "formateur" ? "/dashboard/formateur" : "/dashboard/apprenant";
+      const dashboard = role === "formateur" ? "/dashboard/formateur" : "/dashboard/apprenant";
       navigate(dashboard);
     } catch (err) {
       setErreur(getMessageErreurApi(err, "Erreur de connexion. Vérifiez que le backend est démarré."));
