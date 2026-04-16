@@ -1,0 +1,64 @@
+services:
+  api:
+    build:
+      context: ./skillhub_back
+    container_name: skillhub_back
+    ports:
+      - "8000:8000"
+    environment:
+      APP_ENV: local
+      APP_DEBUG: 'true'
+      APP_URL: http://localhost:8000
+      SESSION_DRIVER: file
+      DB_CONNECTION: mysql
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_DATABASE: skillhub
+      DB_USERNAME: skillhub
+      DB_PASSWORD: skillhubpass
+      MONGODB_URI: mongodb://mongo:27017
+      MONGODB_DB: skillhub_activity_log
+      MONGODB_COLLECTION: activity_logs
+    volumes:
+      - ./skillhub_back/storage:/var/www/html/storage
+    depends_on:
+      - mysql
+      - mongo
+
+  mysql:
+    image: mysql:8.0
+    container_name: skillhub_mysql
+    environment:
+      MYSQL_DATABASE: skillhub
+      MYSQL_USER: skillhub
+      MYSQL_PASSWORD: skillhubpass
+      MYSQL_ROOT_PASSWORD: rootpass
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+
+  mongo:
+    image: mongo:7.0
+    container_name: skillhub_mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+  frontend:
+    build:
+      context: ./skillhub_front
+      args:
+        VITE_API_URL: /api
+    container_name: skillhub_front
+    ports:
+      - "5173:80"
+    environment:
+      VITE_API_URL: /api
+    depends_on:
+      - api
+
+volumes:
+  mysql-data:
+  mongo-data:
