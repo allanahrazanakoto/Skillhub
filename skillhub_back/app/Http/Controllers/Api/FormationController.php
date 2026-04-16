@@ -98,7 +98,7 @@ class FormationController extends Controller
      */
     public function show(int $id): JsonResponse
     {
-        $formation = Formation::with(['formateur:id,nom,prenom', 'categorie:id,libelle'])
+        $formation = Formation::with(['formateur:id,nom,prenom', 'categorie:id,libelle', 'modules'])
             ->withCount('inscriptions')
             ->find($id);
 

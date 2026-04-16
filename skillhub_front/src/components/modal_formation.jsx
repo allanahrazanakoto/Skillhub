@@ -1,8 +1,9 @@
 // Modal qui affiche une formation : soit en lecture seule (voir), soit en édition (modifier).
 // En mode voir : boutons Modifier et Supprimer. En mode modifier : formulaire + Enregistrer. Les badges prix/niveau/statut en haut ne s'affichent qu'en lecture.
 // On attend la fin de onSave avant de fermer : c'est le parent qui ferme après succès, donc on ne appelle pas onClose dans handleSubmit.
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { getMessageErreurApi } from "../api/utils";
+import { formationsApi } from "../api/formations";
 import FormationImage from "./FormationImage";
 import "./css/ajouter_atelier.css";
 import "./css/modal_formation.css";
@@ -35,6 +36,11 @@ function Modal_Formation({
   const [imagePreview, setImagePreview] = useState(null);
   const [saving, setSaving] = useState(false);
   const [erreurSauvegarde, setErreurSauvegarde] = useState("");
+  const [modules, setModules] = useState([]);
+  const [moduleForm, setModuleForm] = useState({ titre: "", contenu: "", ordre: "" });
+  const [editingModuleId, setEditingModuleId] = useState(null);
+  const [moduleSaving, setModuleSaving] = useState(false);
+  const [moduleErreur, setModuleErreur] = useState("");
   const imagePreviewRef = useRef(null);
 
   // Traduction des codes niveau pour l'affichage
@@ -45,7 +51,7 @@ function Modal_Formation({
   };
 
   // Réinitialise les champs du formulaire avec les données de la formation courante
-  const resetFormData = () => {
+  const resetFormData = useCallback(() => {
     if (formation) {
       setFormData({
         nom: formation.nom || "",
@@ -66,16 +72,24 @@ function Modal_Formation({
         imagePreviewRef.current = null;
       }
       setImagePreview(null);
+      setModules(Array.isArray(formation.modules) ? formation.modules : []);
+      setModuleForm({ titre: "", contenu: "", ordre: "" });
+      setEditingModuleId(null);
+      setModuleErreur("");
     }
-  };
+  }, [formation]);
 
   useEffect(() => {
     if (formation && show) {
       resetFormData();
       setIsEditing(mode === "modifier");
       setErreurSauvegarde("");
+      formationsApi
+        .getModules(formation.id)
+        .then((data) => setModules(Array.isArray(data) ? data : []))
+        .catch(() => {});
     }
-  }, [formation, mode, show]);
+  }, [formation, mode, show, resetFormData]);
 
   useEffect(() => {
     return () => {
@@ -147,6 +161,68 @@ function Modal_Formation({
     setIsEditing(false);
     resetFormData();
     onClose();
+  };
+
+  const resetModuleForm = () => {
+    setModuleForm({ titre: "", contenu: "", ordre: "" });
+    setEditingModuleId(null);
+  };
+
+  const handleSubmitModule = async (e) => {
+    e.preventDefault();
+    if (!formation?.id) return;
+    if (!moduleForm.titre.trim()) {
+      setModuleErreur("Le titre du module est requis.");
+      return;
+    }
+    setModuleErreur("");
+    setModuleSaving(true);
+    try {
+      const payload = {
+        titre: moduleForm.titre.trim(),
+        contenu: moduleForm.contenu.trim() || null,
+      };
+      if (moduleForm.ordre !== "") payload.ordre = Number(moduleForm.ordre);
+      if (editingModuleId) {
+        await formationsApi.updateModule(editingModuleId, payload);
+      } else {
+        await formationsApi.createModule(formation.id, payload);
+      }
+      const list = await formationsApi.getModules(formation.id);
+      setModules(Array.isArray(list) ? list : []);
+      resetModuleForm();
+    } catch (err) {
+      setModuleErreur(getMessageErreurApi(err, "Erreur lors de l'enregistrement du module."));
+    } finally {
+      setModuleSaving(false);
+    }
+  };
+
+  const handleEditModule = (module) => {
+    setEditingModuleId(module.id);
+    setModuleForm({
+      titre: module.titre || "",
+      contenu: module.contenu || "",
+      ordre: module.ordre ?? "",
+    });
+    setModuleErreur("");
+  };
+
+  const handleDeleteModule = async (moduleId) => {
+    if (!formation?.id) return;
+    if (!window.confirm("Supprimer ce module ?")) return;
+    setModuleErreur("");
+    setModuleSaving(true);
+    try {
+      await formationsApi.deleteModule(moduleId);
+      const list = await formationsApi.getModules(formation.id);
+      setModules(Array.isArray(list) ? list : []);
+      if (editingModuleId === moduleId) resetModuleForm();
+    } catch (err) {
+      setModuleErreur(getMessageErreurApi(err, "Erreur lors de la suppression du module."));
+    } finally {
+      setModuleSaving(false);
+    }
   };
 
   if (!show || !formation) return null;
@@ -368,6 +444,95 @@ function Modal_Formation({
               )}
             </div>
           </div>
+
+          {onSave && onDelete && (
+            <section className="mt-3">
+              <h4 className="titre-section-modal">Modules de la formation</h4>
+              {modules.length === 0 ? (
+                <p className="text-muted">Aucun module pour le moment.</p>
+              ) : (
+                <div className="d-flex flex-column gap-2 mb-3">
+                  {modules.map((module, index) => (
+                    <div key={module.id} className="border rounded p-2">
+                      <div className="d-flex justify-content-between align-items-start gap-2">
+                        <div>
+                          <strong>
+                            Module {module.ordre || index + 1} - {module.titre}
+                          </strong>
+                          {module.contenu && <p className="mb-0 mt-1">{module.contenu}</p>}
+                        </div>
+                        <div className="d-flex gap-2">
+                          <button
+                            type="button"
+                            className="btn btn-outline-primary btn-sm"
+                            onClick={() => handleEditModule(module)}
+                          >
+                            Modifier
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-outline-danger btn-sm"
+                            onClick={() => handleDeleteModule(module.id)}
+                          >
+                            Supprimer
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <form onSubmit={handleSubmitModule} className="d-flex flex-column gap-2">
+                <input
+                  type="text"
+                  className="champ-saisie-modal"
+                  placeholder="Titre du module"
+                  value={moduleForm.titre}
+                  onChange={(e) => setModuleForm((prev) => ({ ...prev, titre: e.target.value }))}
+                />
+                <textarea
+                  className="champ-saisie-modal"
+                  rows={3}
+                  placeholder="Contenu du module (optionnel)"
+                  value={moduleForm.contenu}
+                  onChange={(e) => setModuleForm((prev) => ({ ...prev, contenu: e.target.value }))}
+                />
+                <input
+                  type="number"
+                  min="1"
+                  className="champ-saisie-modal"
+                  placeholder="Ordre (optionnel)"
+                  value={moduleForm.ordre}
+                  onChange={(e) => setModuleForm((prev) => ({ ...prev, ordre: e.target.value }))}
+                />
+                {moduleErreur && <p className="erreur-auth mb-0">{moduleErreur}</p>}
+                <div className="d-flex gap-2">
+                  <button
+                    type="submit"
+                    className="btn btn-primary btn-sm"
+                    disabled={moduleSaving}
+                  >
+                    {moduleSaving
+                      ? "Enregistrement..."
+                      : editingModuleId
+                        ? "Mettre à jour le module"
+                        : "Ajouter le module"}
+                  </button>
+                  {editingModuleId && (
+                    <button
+                      type="button"
+                      className="btn btn-outline-secondary btn-sm"
+                      onClick={resetModuleForm}
+                      disabled={moduleSaving}
+                    >
+                      Annuler l'édition
+                    </button>
+                  )}
+                </div>
+              </form>
+            </section>
+          )}
 
           {isEditing && erreurSauvegarde && (
             <p className="erreur-auth">{erreurSauvegarde}</p>

@@ -1,8 +1,8 @@
 // Page catalogue : on affiche les formations du formateur en cartes avec filtre recherche + prix.
 // Clic sur "Voir la formation" = ouverture du modal en lecture seule.
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import Header from "../../components/header";
-import Modal_Formation from "../../components/modal_formation";
 import { formationsApi, formatFormationForDisplay } from "../../api/formations";
 import { authApi } from "../../api/auth";
 import { getMessageErreurApi } from "../../api/utils";
@@ -14,8 +14,6 @@ function Mes_Ateliers() {
   const [meta, setMeta] = useState(null);
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState("");
-  const [showModalFormation, setShowModalFormation] = useState(false);
-  const [formationSelectionnee, setFormationSelectionnee] = useState(null);
   // Filtres côté client : recherche texte et fourchette de prix
   const [recherche, setRecherche] = useState("");
   const [prixMin, setPrixMin] = useState("");
@@ -63,18 +61,6 @@ function Mes_Ateliers() {
   useEffect(() => {
     chargerFormations();
   }, [utilisateur?.id]);
-
-  // Ouvre le modal en mode lecture seule avec la formation sélectionnée
-  const handleVoirFormation = (id) => {
-    const formation = formations.find((f) => f.id === id);
-    setFormationSelectionnee(formation);
-    setShowModalFormation(true);
-  };
-
-  const handleCloseModal = () => {
-    setShowModalFormation(false);
-    setFormationSelectionnee(null);
-  };
 
   return (
     <>
@@ -128,13 +114,6 @@ function Mes_Ateliers() {
                 />
               </div>
 
-              <Modal_Formation
-                formation={formationSelectionnee}
-                mode="voir"
-                show={showModalFormation}
-                onClose={handleCloseModal}
-              />
-
               {formationsFiltrees.length === 0 ? (
                 <p className="text-center py-5 text-muted">
                   Aucun résultat pour ces critères de recherche.
@@ -183,13 +162,12 @@ function Mes_Ateliers() {
                             <span className="valeur">{formation.statut}</span>
                           </p>
                         </div>
-                        <button
-                          type="button"
-                          className="bouton-formation"
-                          onClick={() => handleVoirFormation(formation.id)}
+                        <Link
+                          to={`/formateur/formation/${formation.id}`}
+                          className="bouton-formation text-decoration-none text-center"
                         >
                           Voir la formation
-                        </button>
+                        </Link>
                       </div>
                     </div>
                   </div>
