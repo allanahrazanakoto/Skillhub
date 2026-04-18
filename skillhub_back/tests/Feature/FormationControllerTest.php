@@ -117,4 +117,56 @@ class FormationControllerTest extends TestCase
         $formation->refresh();
         $this->assertNotEquals('Pirate', $formation->nom);
     }
+
+    public function test_post_formation_with_invalid_payload_returns_422(): void
+    {
+        $response = $this->withHeader('Authorization', 'Bearer ' . $this->getAuthToken())
+            ->postJson('/api/formations', [
+                'title' => '',
+                'description' => '',
+                'price' => -5,
+                'duration' => -1,
+                'level' => 'expert',
+            ]);
+
+        $response->assertStatus(422);
+        $this->assertDatabaseMissing('formations', ['nom' => '']);
+    }
+
+    public function test_formateur_can_update_own_formation(): void
+    {
+        $categorie = CategorieFormation::first();
+        $formation = \App\Models\Formation::factory()->create([
+            'id_formateur' => $this->formateur->id,
+            'id_categorie' => $categorie->id,
+            'nom' => 'Ancien nom',
+        ]);
+
+        $response = $this->withHeader('Authorization', 'Bearer ' . $this->getAuthToken())
+            ->putJson('/api/formations/' . $formation->id, [
+                'nom' => 'Nouveau nom',
+                'description' => 'Description mise à jour',
+                'prix' => 299.99,
+                'duree_heures' => 18,
+                'level' => 'advanced',
+                'statut' => 'Terminé',
+            ]);
+
+        $response->assertStatus(200)
+            ->assertJson([
+                'message' => 'Formation mise à jour',
+                'formation' => [
+                    'title' => 'Nouveau nom',
+                    'level' => 'advanced',
+                    'statut' => 'Terminé',
+                ],
+            ]);
+
+        $this->assertDatabaseHas('formations', [
+            'id' => $formation->id,
+            'nom' => 'Nouveau nom',
+            'level' => 'advanced',
+            'statut' => 'Terminé',
+        ]);
+    }
 }
