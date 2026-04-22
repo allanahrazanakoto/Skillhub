@@ -214,6 +214,104 @@ Optionnel si seed nécessaire:
 docker compose exec api php artisan db:seed --force
 ```
 
+## Commandes Docker Utiles (PowerShell)
+
+> Note: en PowerShell Windows classique, preferer `;` ou des lignes separees plutot que `&&`.
+
+### 1) Demarrage / Arret de la stack
+
+```powershell
+docker compose up -d
+docker compose down
+docker compose down --remove-orphans
+docker compose ps
+```
+
+### 2) Rebuild propre apres changement Dockerfile/compose
+
+```powershell
+docker compose down
+docker compose up -d --build
+docker compose ps
+```
+
+### 3) Logs et diagnostic rapide
+
+```powershell
+docker compose logs -f
+docker compose logs -f api
+docker compose logs -f frontend
+docker compose logs -f mysql
+docker compose logs -f mongo
+```
+
+### 4) Commandes Laravel dans le conteneur API
+
+```powershell
+docker compose exec api php artisan migrate --force
+docker compose exec api php artisan migrate:fresh --seed --force
+docker compose exec api php artisan db:seed --force
+docker compose exec api php artisan db:seed --class=CategorieFormationSeeder --force
+docker compose exec api php artisan config:clear
+docker compose exec api php artisan cache:clear
+docker compose exec api php artisan route:clear
+```
+
+### 5) Verification des endpoints depuis l'hote
+
+```powershell
+curl.exe -s http://127.0.0.1:8000/api/categories
+curl.exe -s http://127.0.0.1:5173/api/categories
+```
+
+### 6) Nettoyage cache Docker (sans supprimer les volumes)
+
+```powershell
+docker system df
+docker builder prune -af
+docker system prune -f
+docker system df
+```
+
+Equivalent en une seule ligne PowerShell:
+
+```powershell
+docker system df; docker builder prune -af; docker system prune -f; docker system df
+```
+
+### 7) Nettoyage agressif (supprime aussi les volumes)
+
+```powershell
+docker compose down -v
+docker system prune -a --volumes -f
+```
+
+Attention: ces commandes suppriment les donnees persistantes (MySQL/Mongo).
+
+### 8) Acces shell dans les conteneurs
+
+```powershell
+docker compose exec api sh
+docker compose exec frontend sh
+docker compose exec mysql sh
+```
+
+### 9) Inspecter l'etat Docker global
+
+```powershell
+docker ps -a
+docker images
+docker volume ls
+docker network ls
+docker system df -v
+```
+
+### 10) Routine recommandee apres merge (rapide)
+
+```powershell
+docker compose up -d --build; docker compose exec api php artisan migrate --force; docker compose exec api php artisan db:seed --class=CategorieFormationSeeder --force; docker compose ps
+```
+
 ## Points de Vigilance pour les Prochaines Contributions
 
 - Toujours aligner `composer.lock` après modification de `composer.json`.

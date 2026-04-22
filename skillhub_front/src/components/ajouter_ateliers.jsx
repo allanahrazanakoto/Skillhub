@@ -305,11 +305,11 @@ function Ajouter_Ateliers({ show, onClose, onSuccess, categories = [] }) {
             {erreurs.level && <span className="erreur-champ">{erreurs.level}</span>}
           </div>
 
-          {categories.length > 0 && (
-            <div className="champ-modal">
-              <label htmlFor="formation-categorie" className="libelle-modal">
-                Catégorie *
-              </label>
+          <div className="champ-modal">
+            <label htmlFor="formation-categorie" className="libelle-modal">
+              Catégorie *
+            </label>
+            {categories.length > 0 ? (
               <select
                 id="formation-categorie"
                 name="id_categorie"
@@ -324,9 +324,13 @@ function Ajouter_Ateliers({ show, onClose, onSuccess, categories = [] }) {
                   </option>
                 ))}
               </select>
-              {erreurs.id_categorie && <span className="erreur-champ">{erreurs.id_categorie}</span>}
-            </div>
-          )}
+            ) : (
+              <p className="text-muted small mb-0">
+                Aucune catégorie chargée. Vérifiez l&apos;API `/api/categories`.
+              </p>
+            )}
+            {erreurs.id_categorie && <span className="erreur-champ">{erreurs.id_categorie}</span>}
+          </div>
 
           {erreurGlobale && <p className="erreur-auth">{erreurGlobale}</p>}
           <div className="actions-modal">

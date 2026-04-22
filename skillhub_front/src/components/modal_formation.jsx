@@ -367,26 +367,35 @@ function Modal_Formation({
               )}
             </div>
 
-            {isEditing && categories.length > 0 && (
+            {isEditing && (
               <div className="champ-modal champ-modal-inline">
                 <label htmlFor="formation-categorie" className="libelle-modal">
                   Catégorie
                 </label>
-                <select
-                  id="formation-categorie"
-                  name="id_categorie"
-                  className="select-modal"
-                  value={formData.id_categorie}
-                  onChange={handleChange}
-                  required
-                >
-                  <option value="">Sélectionnez une catégorie</option>
-                  {categories.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.libelle}
-                    </option>
-                  ))}
-                </select>
+                {categories.length > 0 ? (
+                  <select
+                    id="formation-categorie"
+                    name="id_categorie"
+                    className="select-modal"
+                    value={formData.id_categorie}
+                    onChange={handleChange}
+                    required
+                  >
+                    <option value="">Sélectionnez une catégorie</option>
+                    {categories.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.libelle}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <>
+                    <div className="valeur-lecture">{formData.domaine || "—"}</div>
+                    <p className="text-muted small mb-0">
+                      Liste des catégories indisponible. Vérifiez l&apos;API `/api/categories`.
+                    </p>
+                  </>
+                )}
               </div>
             )}
 

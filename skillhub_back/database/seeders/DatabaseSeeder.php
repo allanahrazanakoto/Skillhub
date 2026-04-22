@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\Utilisateur;
 use Illuminate\Database\Seeder;
 
 /**
@@ -16,10 +15,8 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Exemple : créer un formateur de test (décommente si besoin)
-        // Utilisateur::factory()->formateur()->create([
-        //     'email' => 'formateur@skillhub.local',
-        //     'mot_de_passe' => 'password123',
-        // ]);
+        $this->call([
+            CategorieFormationSeeder::class,
+        ]);
     }
 }
