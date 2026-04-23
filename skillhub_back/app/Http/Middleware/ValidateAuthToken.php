@@ -34,6 +34,24 @@ class ValidateAuthToken
 
         $token = substr($authHeader, 7);
 
+        // En environnement de test, on utilise JWT local (Spring Boot non disponible)
+        if (app()->environment('testing')) {
+            try {
+                $user = auth('api')->setToken($token)->user();
+                if ($user) {
+                    Auth::setUser($user);
+                    $request->merge(['authUser' => [
+                        'email'  => $user->email,
+                        'role'   => $user->role,
+                        'nom'    => $user->nom ?? '',
+                        'prenom' => $user->prenom ?? '',
+                    ]]);
+                    return $next($request);
+                }
+            } catch (\Exception $e) {}
+            return response()->json(['message' => 'Token invalide.'], 401);
+        }
+
         try {
             $response = Http::timeout(5)
                 ->get("{$this->authServiceUrl}/api/auth/validate", [
