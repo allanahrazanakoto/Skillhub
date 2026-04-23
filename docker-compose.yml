@@ -1,3 +1,5 @@
+name: skillhub
+
 services:
   # ─────────────────────────────────────────
   # MICROSERVICE AUTH — Spring Boot (TP5 adapté)
