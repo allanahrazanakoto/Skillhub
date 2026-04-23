@@ -7,14 +7,12 @@ name: CI Pipeline
 on:
   push:
     branches:
-      - main
       - dev
     paths-ignore:
       - "**/*.md"
       - "Doc/**"
   pull_request:
     branches:
-      - main
       - dev
     paths-ignore:
       - "**/*.md"
