@@ -35,7 +35,7 @@ function Inscription() {
     if (/[A-Z]/.test(mdp)) score++;
     if (/[a-z]/.test(mdp)) score++;
     if (/[0-9]/.test(mdp)) score++;
-    if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]/.test(mdp)) score++;
+    if (/[!@#$%^&*()_+={}|,.<>?]/.test(mdp)) score++;
     if (score <= 2) return { score, label: "Faible", couleur: "#e53935" };
     if (score <= 3) return { score, label: "Moyen", couleur: "#fb8c00" };
     return { score, label: "Fort", couleur: "#43a047" };
@@ -46,7 +46,7 @@ function Inscription() {
     if (!/[A-Z]/.test(mdp)) return "Le mot de passe doit contenir au moins 1 majuscule.";
     if (!/[a-z]/.test(mdp)) return "Le mot de passe doit contenir au moins 1 minuscule.";
     if (!/[0-9]/.test(mdp)) return "Le mot de passe doit contenir au moins 1 chiffre.";
-    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]/.test(mdp)) return "Le mot de passe doit contenir au moins 1 caractère spécial (!@#$...).";
+    if (!/[!@#$%^&*()_+={}|,.<>?]/.test(mdp)) return "Le mot de passe doit contenir au moins 1 caractère spécial (!@#$...).";
     return null;
   };
 
