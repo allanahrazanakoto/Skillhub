@@ -1,4 +1,31 @@
 services:
+  # ─────────────────────────────────────────
+  # MICROSERVICE AUTH — Spring Boot (TP5 adapté)
+  # Gère : inscription, connexion HMAC, validation token
+  # Les autres services appellent http://auth:8080 en interne
+  # ─────────────────────────────────────────
+  auth:
+    build:
+      context: ./skillhub_auth
+    container_name: skillhub_auth
+    ports:
+      # Port hôte 8080 → port conteneur 8080
+      - "8080:8080"
+    environment:
+      # Clé maître pour le chiffrement AES-GCM des mots de passe
+      APP_MASTER_KEY: ${APP_MASTER_KEY:-skillhub_master_key_change_in_prod}
+      # Connexion MySQL : base séparée "authdb" pour ne pas mélanger avec SkillHub
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/authdb
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER:-skillhub}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD:-skillhubpass}
+    depends_on:
+      mysql:
+        # On attend que MySQL soit vraiment prête avant de démarrer Spring Boot
+        condition: service_healthy
+    restart: unless-stopped
+    mem_limit: 512m
+    cpus: "0.5"
+
   api:
     build:
       context: ./skillhub_back
@@ -26,6 +53,9 @@ services:
         condition: service_healthy
       mongo:
         condition: service_started
+      # Laravel dépend aussi du microservice auth pour valider les tokens
+      auth:
+        condition: service_started
 
   mysql:
     image: mysql:8.0
@@ -35,12 +65,16 @@ services:
       MYSQL_USER: skillhub
       MYSQL_PASSWORD: skillhubpass
       MYSQL_ROOT_PASSWORD: rootpass
-    # Hôte → conteneur 3306 : port hôte rare pour limiter les conflits (3306/3307 souvent pris).
-    # Depuis Windows : localhost:13306. L’API dans Docker utilise toujours mysql:3306.
+      # Évite les erreurs de timezone au démarrage
+      MYSQL_INITDB_SKIP_TZINFO: "1"
+    # Port hôte 13306 → conteneur 3306 (évite les conflits avec MySQL local)
+    # Depuis Windows : localhost:13306. En Docker interne : mysql:3306
     ports:
       - "13306:3306"
     volumes:
       - mysql-data:/var/lib/mysql
+      # Ce script SQL s'exécute au 1er démarrage → crée la base authdb pour Spring Boot
+      - ./BDD/init_authdb.sql:/docker-entrypoint-initdb.d/init_authdb.sql:ro
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-prootpass"]
       interval: 5s

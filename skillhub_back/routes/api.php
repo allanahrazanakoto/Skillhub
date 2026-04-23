@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CategorieFormationController;
 use App\Http\Controllers\Api\FormationController;
 use App\Http\Controllers\Api\InscriptionController;
@@ -9,30 +8,20 @@ use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
-| Routes API - Toutes les URLs sont préfixées par /api
+| API Routes
 |--------------------------------------------------------------------------
 */
 
-// --- Auth
-Route::prefix('auth')->group(function () {
-    Route::post('inscription', [AuthController::class, 'register']);
-    Route::post('connexion', [AuthController::class, 'login']);
-    Route::middleware('auth:api')->group(function () {
-        Route::post('deconnexion', [AuthController::class, 'logout']);
-        Route::get('me', [AuthController::class, 'me']);
-        Route::post('refresh', [AuthController::class, 'refresh']);
-    });
-});
-
+// Routes publiques
 Route::get('categories', [CategorieFormationController::class, 'index']);
-
-// --- Formations : liste et détail publics (catalogue, page accueil). Création / modification / suppression protégées.
 Route::get('formations', [FormationController::class, 'index']);
 Route::get('formations/{id}', [FormationController::class, 'show'])->whereNumber('id');
 
-Route::middleware('auth:api')->group(function () {
+// Routes protégées
+Route::middleware('auth.token')->group(function () {
     Route::get('formations/{formationId}/modules', [ModuleController::class, 'index'])->whereNumber('formationId');
 
+    // Routes formateur seulement
     Route::middleware('formateur')->group(function () {
         Route::post('formations', [FormationController::class, 'store']);
         Route::put('formations/{formation}', [FormationController::class, 'update']);
@@ -43,7 +32,7 @@ Route::middleware('auth:api')->group(function () {
         Route::delete('modules/{module}', [ModuleController::class, 'destroy']);
     });
 
-    // Inscription / désinscription / progression / liste suivies : apprenants uniquement
+    // Routes apprenant seulement
     Route::middleware('apprenant')->group(function () {
         Route::post('formations/{formationId}/inscription', [InscriptionController::class, 'store']);
         Route::delete('formations/{formationId}/inscription', [InscriptionController::class, 'destroy']);

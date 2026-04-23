@@ -1,0 +1,7 @@
+# On exclut les fichiers inutiles pour réduire la taille du contexte Docker
+target/
+.idea/
+*.md
+logs/
+.git/
+.gitignore

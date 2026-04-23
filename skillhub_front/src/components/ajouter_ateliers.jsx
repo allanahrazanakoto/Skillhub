@@ -98,7 +98,7 @@ function Ajouter_Ateliers({ show, onClose, onSuccess, categories = [] }) {
     if (!validate()) return;
 
     const utilisateur = authApi.getUtilisateur();
-    if (!utilisateur?.id) {
+    if (!utilisateur?.email) {
       setErreurGlobale("Vous devez être connecté pour créer une formation.");
       return;
     }

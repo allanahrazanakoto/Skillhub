@@ -14,10 +14,11 @@ class VerifierFormateur
 {
     public function handle(Request $request, Closure $next): Response
     {
-        $user = $request->user();
+        // On lit le rôle depuis authUser (mis par le middleware ValidateAuthToken)
+        // ValidateAuthToken a appelé Spring Boot et stocké { email, role, nom } dans la requête
+        $authUser = $request->input('authUser');
 
-        // Seuls les utilisateurs connectés avec le rôle "formateur" peuvent accéder aux routes protégées
-        if (! $user || $user->role !== 'formateur') {
+        if (! $authUser || ($authUser['role'] ?? '') !== 'formateur') {
             return response()->json([
                 'message' => 'Accès réservé aux formateurs uniquement.',
             ], 403);

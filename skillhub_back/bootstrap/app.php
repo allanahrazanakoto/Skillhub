@@ -25,8 +25,10 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
-            'formateur' => \App\Http\Middleware\VerifierFormateur::class,
-            'apprenant' => \App\Http\Middleware\VerifierApprenant::class,
+            'formateur'   => \App\Http\Middleware\VerifierFormateur::class,
+            'apprenant'   => \App\Http\Middleware\VerifierApprenant::class,
+            // Nouveau middleware : valide le token auprès du microservice Spring Boot Auth
+            'auth.token'  => \App\Http\Middleware\ValidateAuthToken::class,
         ]);
         // Evite la redirection vers une route "login" inexistante sur les routes API protégées.
         $middleware->redirectGuestsTo(function (Request $request) {

@@ -13,6 +13,7 @@ function Inscription() {
   const [formData, setFormData] = useState({
     email: "",
     mot_de_passe: "",
+    confirmer_mot_de_passe: "",
     nom: "",
     prenom: "",
     role: "participant",
@@ -27,11 +28,41 @@ function Inscription() {
     setErreur("");
   };
 
+  const calculerForceMdp = (mdp) => {
+    if (!mdp) return { score: 0, label: "", couleur: "" };
+    let score = 0;
+    if (mdp.length >= 12) score++;
+    if (/[A-Z]/.test(mdp)) score++;
+    if (/[a-z]/.test(mdp)) score++;
+    if (/[0-9]/.test(mdp)) score++;
+    if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(mdp)) score++;
+    if (score <= 2) return { score, label: "Faible", couleur: "#e53935" };
+    if (score <= 3) return { score, label: "Moyen", couleur: "#fb8c00" };
+    return { score, label: "Fort", couleur: "#43a047" };
+  };
+
+  const validerMotDePasse = (mdp) => {
+    if (mdp.length < 12) return "Le mot de passe doit contenir au moins 12 caractères.";
+    if (!/[A-Z]/.test(mdp)) return "Le mot de passe doit contenir au moins 1 majuscule.";
+    if (!/[a-z]/.test(mdp)) return "Le mot de passe doit contenir au moins 1 minuscule.";
+    if (!/[0-9]/.test(mdp)) return "Le mot de passe doit contenir au moins 1 chiffre.";
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(mdp)) return "Le mot de passe doit contenir au moins 1 caractère spécial (!@#$...).";
+    return null;
+  };
+
   // Envoie les données au back ; en cas de succès, redirige vers la page de connexion après 2 s
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErreur("");
     setSucces("");
+
+    const errMdp = validerMotDePasse(formData.mot_de_passe);
+    if (errMdp) { setErreur(errMdp); return; }
+    if (formData.mot_de_passe !== formData.confirmer_mot_de_passe) {
+      setErreur("Les mots de passe ne correspondent pas.");
+      return;
+    }
+
     setChargement(true);
     try {
       const res = await authApi.inscription(formData);
@@ -42,6 +73,7 @@ function Inscription() {
       setFormData({
         email: "",
         mot_de_passe: "",
+        confirmer_mot_de_passe: "",
         nom: "",
         prenom: "",
         role: formData.role,
@@ -153,7 +185,48 @@ function Inscription() {
                 value={formData.mot_de_passe}
                 onChange={handleChange}
                 required
-                minLength={6}
+                autoComplete="new-password"
+              />
+              <p style={{ fontSize: "0.78rem", color: "#888", marginTop: "4px" }}>
+                12 caractères min. · 1 majuscule · 1 minuscule · 1 chiffre · 1 caractère spécial (!@#$...)
+              </p>
+              {formData.mot_de_passe && (() => {
+                const force = calculerForceMdp(formData.mot_de_passe);
+                return (
+                  <div style={{ marginTop: "6px" }}>
+                    <div style={{ height: "6px", borderRadius: "3px", background: "#e0e0e0", overflow: "hidden" }}>
+                      <div style={{
+                        height: "100%",
+                        width: `${(force.score / 5) * 100}%`,
+                        background: force.couleur,
+                        borderRadius: "3px",
+                        transition: "width 0.3s, background 0.3s"
+                      }} />
+                    </div>
+                    <p style={{ fontSize: "0.78rem", color: force.couleur, marginTop: "3px", fontWeight: 600 }}>
+                      {force.label}
+                    </p>
+                  </div>
+                );
+              })()}
+            </div>
+
+            <div className="champ-auth">
+              <label
+                htmlFor="inscription-confirmer-mot-de-passe"
+                className="libelle-auth"
+              >
+                Confirmer le mot de passe
+              </label>
+              <input
+                id="inscription-confirmer-mot-de-passe"
+                name="confirmer_mot_de_passe"
+                type="password"
+                className="champ-saisie-auth"
+                placeholder="••••••••"
+                value={formData.confirmer_mot_de_passe}
+                onChange={handleChange}
+                required
                 autoComplete="new-password"
               />
             </div>

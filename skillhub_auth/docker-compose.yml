@@ -1,0 +1,28 @@
+version: '3.8'
+services:
+  mysql:
+    image: mysql:8
+    environment: #Crée automatiquement la base authdb avec le mot de passe root
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: authdb
+    ports:
+      - "3306:3306"
+    healthcheck: #Attend que MySQL soit vraiment prêt avant de démarrer Spring Boot
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .  #Construit l'image depuis Dockerfile et la nomme cdwfs-auth-app
+    image: cdwfs-auth-app
+    ports:
+      - "8080:8080"
+    environment:
+      APP_MASTER_KEY: test_master_key
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/authdb
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+    depends_on:
+      mysql:
+        condition: service_healthy

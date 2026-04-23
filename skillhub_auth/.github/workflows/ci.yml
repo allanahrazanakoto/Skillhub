@@ -1,0 +1,54 @@
+# TP5 - Pipeline CI/CD avec Docker
+name: CI Build Test Sonar Docker
+
+on:
+  push:
+    branches: [ "main", "tp2", "tp3", "tp4", "tp5-change-password" ]
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  build:
+    name: Build and analyze
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'maven'
+
+      - name: Set Master Key
+        run: echo "APP_MASTER_KEY=test_master_key_for_ci_only" >> $GITHUB_ENV
+
+      - name: Build project
+        run: mvn clean package -DskipTests
+        env:
+          APP_MASTER_KEY: ${{ env.APP_MASTER_KEY }}
+
+      - name: Run tests
+        run: mvn test
+        env:
+          APP_MASTER_KEY: ${{ env.APP_MASTER_KEY }}
+
+      - name: SonarCloud analysis
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          APP_MASTER_KEY: ${{ env.APP_MASTER_KEY }}
+        run: mvn -B org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
+          -Dsonar.projectKey=allanahrazanakoto_auth-server
+          -Dsonar.organization=allanahrazanakoto
+          -Dsonar.host.url=https://sonarcloud.io
+
+      - name: Build Docker image
+        run: docker build -t cdwfs-auth-app .
+
+      - name: Docker Compose build
+        run: docker compose build

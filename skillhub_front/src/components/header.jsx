@@ -64,6 +64,11 @@ function Header() {
               >
                 Déconnexion
               </button>
+              {utilisateur && (
+                <span className="header-user-name">
+                  {[utilisateur.prenom, utilisateur.nom].filter(Boolean).join(" ") || utilisateur.email}
+                </span>
+              )}
             </div>
           </div>
         </nav>

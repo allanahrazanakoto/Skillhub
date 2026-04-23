@@ -22,12 +22,12 @@ function Home() {
     let cancelled = false;
     (async () => {
       await Promise.resolve();
-      if (!utilisateur?.id) {
+      if (!utilisateur?.email) {
         if (!cancelled) setChargement(false);
         return;
       }
       try {
-        const data = await formationsApi.getFormations({ id_formateur: utilisateur.id, page: 1, per_page: 15 });
+        const data = await formationsApi.getFormations({ page: 1, per_page: 15 });
         if (!cancelled) {
           setFormations(data.formations ?? []);
           setMeta(data.meta ?? null);
@@ -44,7 +44,7 @@ function Home() {
     return () => {
       cancelled = true;
     };
-  }, [utilisateur?.id]);
+  }, [utilisateur?.email]);
 
   // total = nombre total côté back si on a meta, sinon on se rabat sur la longueur de la liste (1ère page).
   const total = meta?.total ?? formations.length;

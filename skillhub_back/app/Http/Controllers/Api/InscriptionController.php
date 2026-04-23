@@ -7,17 +7,24 @@ use App\Models\Formation;
 use App\Models\FormationModule;
 use App\Models\Inscription;
 use App\Models\ModuleProgression;
+use App\Models\Utilisateur;
 use App\Services\ActivityLogService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 /**
  * Inscriptions apprenants (middleware : rôle participant).
  */
 class InscriptionController extends Controller
 {
-    public function store(int $formationId): JsonResponse
+    public function store(Request $request, int $formationId): JsonResponse
     {
-        $userId = (int) auth()->id();
+        $email = $request->authUser['email'] ?? null;
+        $utilisateur = $email ? Utilisateur::where('email', $email)->first() : null;
+        if (! $utilisateur) {
+            return response()->json(['message' => 'Utilisateur introuvable.'], 404);
+        }
+        $userId = $utilisateur->id;
 
         $formation = Formation::find($formationId);
         if (! $formation) {
@@ -40,9 +47,14 @@ class InscriptionController extends Controller
         return response()->json(['message' => 'Inscription enregistrée.'], 201);
     }
 
-    public function destroy(int $formationId): JsonResponse
+    public function destroy(Request $request, int $formationId): JsonResponse
     {
-        $userId = (int) auth()->id();
+        $email = $request->authUser['email'] ?? null;
+        $utilisateur = $email ? Utilisateur::where('email', $email)->first() : null;
+        if (! $utilisateur) {
+            return response()->json(['message' => 'Utilisateur introuvable.'], 404);
+        }
+        $userId = $utilisateur->id;
 
         $inscription = Inscription::where('utilisateur_id', $userId)->where('formation_id', $formationId)->first();
         if (! $inscription) {
@@ -62,9 +74,14 @@ class InscriptionController extends Controller
         return response()->json(['message' => 'Désinscription effectuée.']);
     }
 
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $userId = (int) auth()->id();
+        $email = $request->authUser['email'] ?? null;
+        $utilisateur = $email ? Utilisateur::where('email', $email)->first() : null;
+        if (! $utilisateur) {
+            return response()->json(['formations' => []]);
+        }
+        $userId = $utilisateur->id;
 
         $inscriptions = Inscription::where('utilisateur_id', $userId)
             ->whereHas('formation')
@@ -86,9 +103,14 @@ class InscriptionController extends Controller
         return response()->json(['formations' => $formations]);
     }
 
-    public function updateProgression(int $formationId): JsonResponse
+    public function updateProgression(Request $request, int $formationId): JsonResponse
     {
-        $userId = (int) auth()->id();
+        $email = $request->authUser['email'] ?? null;
+        $utilisateur = $email ? Utilisateur::where('email', $email)->first() : null;
+        if (! $utilisateur) {
+            return response()->json(['message' => 'Utilisateur introuvable.'], 404);
+        }
+        $userId = $utilisateur->id;
 
         $inscription = Inscription::where('utilisateur_id', $userId)->where('formation_id', $formationId)->first();
         if (! $inscription) {

@@ -13,9 +13,10 @@ class VerifierApprenant
 {
     public function handle(Request $request, Closure $next): Response
     {
-        $user = $request->user();
+        // On lit le rôle depuis authUser (mis par le middleware ValidateAuthToken)
+        $authUser = $request->input('authUser');
 
-        if (! $user || $user->role !== 'participant') {
+        if (! $authUser || ($authUser['role'] ?? '') !== 'participant') {
             return response()->json([
                 'message' => 'Réservé aux apprenants.',
             ], 403);

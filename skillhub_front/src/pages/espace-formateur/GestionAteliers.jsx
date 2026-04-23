@@ -45,12 +45,11 @@ function Gestion_Ateliers() {
   });
 
   const chargerFormations = async (pageNum = 1) => {
-    if (!utilisateur?.id) return;
+    if (!utilisateur?.email) return;
     setChargement(true);
     setErreur("");
     try {
       const data = await formationsApi.getFormations({
-        id_formateur: utilisateur.id,
         page: pageNum,
         per_page: 15,
       });
@@ -76,7 +75,7 @@ function Gestion_Ateliers() {
   useEffect(() => {
     chargerCategories();
     chargerFormations(1);
-  }, [utilisateur?.id]);
+  }, [utilisateur?.email]);
 
   // Ouvre le modal en mode édition pour la formation donnée
   const handleModifier = (id) => {
