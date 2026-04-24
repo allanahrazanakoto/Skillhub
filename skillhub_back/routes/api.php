@@ -1,3 +1,5 @@
+// Constante pour éviter la duplication
+const FORMATION_ROUTE = 'formations/{formation}';
 <?php
 
 use App\Http\Controllers\Api\CategorieFormationController;
@@ -24,9 +26,9 @@ Route::middleware('auth.token')->group(function () {
     // Routes formateur seulement
     Route::middleware('formateur')->group(function () {
         Route::post('formations', [FormationController::class, 'store']);
-        Route::put('formations/{formation}', [FormationController::class, 'update']);
-        Route::post('formations/{formation}', [FormationController::class, 'update']);
-        Route::delete('formations/{formation}', [FormationController::class, 'destroy']);
+        Route::put(FORMATION_ROUTE, [FormationController::class, 'update']);
+        Route::post(FORMATION_ROUTE, [FormationController::class, 'update']);
+        Route::delete(FORMATION_ROUTE, [FormationController::class, 'destroy']);
         Route::post('formations/{formationId}/modules', [ModuleController::class, 'store'])->whereNumber('formationId');
         Route::put('modules/{module}', [ModuleController::class, 'update']);
         Route::delete('modules/{module}', [ModuleController::class, 'destroy']);

@@ -1,3 +1,9 @@
+    // Constantes pour éviter la duplication
+    private const API_FORMATIONS = '/api/formations';
+    private const FORMATION_PHP = 'Formation PHP';
+    private const DESCRIPTION_FORMATION = 'Description de la formation';
+    private const NOUVEAU_NOM = 'Nouveau nom';
+    private const STATUT_TERMINE = 'Terminé';
 <?php
 
 namespace Tests\Feature;
@@ -30,9 +36,9 @@ class FormationControllerTest extends TestCase
      */
     public function test_post_formation_without_token_returns_401(): void
     {
-        $response = $this->postJson('/api/formations', [
-            'title' => 'Formation PHP',
-            'description' => 'Description de la formation',
+        $response = $this->postJson(self::API_FORMATIONS, [
+            'title' => self::FORMATION_PHP,
+            'description' => self::DESCRIPTION_FORMATION,
             'price' => 199.99,
             'duration' => 24,
             'level' => 'beginner',
@@ -47,9 +53,9 @@ class FormationControllerTest extends TestCase
     public function test_post_formation_with_valid_user_returns_201(): void
     {
         $response = $this->withHeader('Authorization', 'Bearer ' . $this->getAuthToken())
-            ->postJson('/api/formations', [
-                'title' => 'Formation PHP',
-                'description' => 'Description de la formation',
+            ->postJson(self::API_FORMATIONS, [
+                'title' => self::FORMATION_PHP,
+                'description' => self::DESCRIPTION_FORMATION,
                 'price' => 199.99,
                 'duration' => 24,
                 'level' => 'beginner',
@@ -59,8 +65,8 @@ class FormationControllerTest extends TestCase
             ->assertJson([
                 'message' => 'Formation créée avec succès',
                 'formation' => [
-                    'title' => 'Formation PHP',
-                    'description' => 'Description de la formation',
+                    'title' => self::FORMATION_PHP,
+                    'description' => self::DESCRIPTION_FORMATION,
                     'price' => 199.99,
                     'duration' => 24,
                     'level' => 'beginner',
@@ -68,7 +74,7 @@ class FormationControllerTest extends TestCase
             ]);
 
         $this->assertDatabaseHas('formations', [
-            'nom' => 'Formation PHP',
+            'nom' => self::FORMATION_PHP,
             'id_formateur' => $this->formateur->id,
         ]);
     }
@@ -82,7 +88,7 @@ class FormationControllerTest extends TestCase
         $token = auth('api')->login($apprenant);
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->postJson('/api/formations', [
+            ->postJson(self::API_FORMATIONS, [
                 'title' => 'Ma formation',
                 'description' => 'Description',
                 'price' => 0,
@@ -108,7 +114,7 @@ class FormationControllerTest extends TestCase
         $token = auth('api')->login($this->formateur);
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->putJson('/api/formations/' . $formation->id, [
+            ->putJson(self::API_FORMATIONS . '/' . $formation->id, [
                 'nom' => 'Pirate',
                 'description' => 'Modification non autorisée',
             ]);
@@ -143,30 +149,30 @@ class FormationControllerTest extends TestCase
         ]);
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $this->getAuthToken())
-            ->putJson('/api/formations/' . $formation->id, [
-                'nom' => 'Nouveau nom',
+            ->putJson(self::API_FORMATIONS . '/' . $formation->id, [
+                'nom' => self::NOUVEAU_NOM,
                 'description' => 'Description mise à jour',
                 'prix' => 299.99,
                 'duree_heures' => 18,
                 'level' => 'advanced',
-                'statut' => 'Terminé',
+                'statut' => self::STATUT_TERMINE,
             ]);
 
         $response->assertStatus(200)
             ->assertJson([
                 'message' => 'Formation mise à jour',
                 'formation' => [
-                    'title' => 'Nouveau nom',
+                    'title' => self::NOUVEAU_NOM,
                     'level' => 'advanced',
-                    'statut' => 'Terminé',
+                    'statut' => self::STATUT_TERMINE,
                 ],
             ]);
 
         $this->assertDatabaseHas('formations', [
             'id' => $formation->id,
-            'nom' => 'Nouveau nom',
+            'nom' => self::NOUVEAU_NOM,
             'level' => 'advanced',
-            'statut' => 'Terminé',
+            'statut' => self::STATUT_TERMINE,
         ]);
     }
 }

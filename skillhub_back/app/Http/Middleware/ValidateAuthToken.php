@@ -15,6 +15,10 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class ValidateAuthToken
 {
+    private const MSG_TOKEN_MANQUANT = 'Token manquant. Veuillez vous connecter.';
+    private const MSG_TOKEN_INVALIDE = 'Token invalide.';
+    private const MSG_TOKEN_EXPIRE = 'Token invalide ou expiré. Veuillez vous reconnecter.';
+    private const MSG_SERVICE_INDISPONIBLE = "Service d'authentification indisponible. Réessayez dans quelques secondes.";
     private string $authServiceUrl;
 
     public function __construct()
@@ -28,7 +32,7 @@ class ValidateAuthToken
 
         if (! $authHeader || ! str_starts_with($authHeader, 'Bearer ')) {
             return response()->json([
-                'message' => 'Token manquant. Veuillez vous connecter.',
+                'message' => self::MSG_TOKEN_MANQUANT,
             ], 401);
         }
 
@@ -49,7 +53,7 @@ class ValidateAuthToken
                     return $next($request);
                 }
             } catch (\Exception $e) {}
-            return response()->json(['message' => 'Token invalide.'], 401);
+            return response()->json(['message' => self::MSG_TOKEN_INVALIDE], 401);
         }
 
         try {
@@ -62,7 +66,7 @@ class ValidateAuthToken
 
             if (! ($data['valid'] ?? false)) {
                 return response()->json([
-                    'message' => 'Token invalide ou expiré. Veuillez vous reconnecter.',
+                    'message' => self::MSG_TOKEN_EXPIRE,
                 ], 401);
             }
 
@@ -95,7 +99,7 @@ class ValidateAuthToken
             Log::error('Auth service error: ' . $e->getMessage());
 
             return response()->json([
-                'message' => 'Service d\'authentification indisponible. Réessayez dans quelques secondes.',
+                'message' => self::MSG_SERVICE_INDISPONIBLE,
             ], 503);
         }
     }

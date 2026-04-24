@@ -17,23 +17,27 @@ use Illuminate\Http\Request;
  */
 class InscriptionController extends Controller
 {
+    private const MSG_UTILISATEUR_INTROUVABLE = 'Utilisateur introuvable.';
+    private const MSG_FORMATION_INTROUVABLE = 'Formation introuvable';
+    private const MSG_DEJA_INSCRIT = 'Vous êtes déjà inscrit à cette formation.';
+    private const MSG_INSCRIPTION_OK = 'Inscription enregistrée.';
     public function store(Request $request, int $formationId): JsonResponse
     {
         $email = $request->authUser['email'] ?? null;
         $utilisateur = $email ? Utilisateur::where('email', $email)->first() : null;
         if (! $utilisateur) {
-            return response()->json(['message' => 'Utilisateur introuvable.'], 404);
+            return response()->json(['message' => self::MSG_UTILISATEUR_INTROUVABLE], 404);
         }
         $userId = $utilisateur->id;
 
         $formation = Formation::find($formationId);
         if (! $formation) {
-            return response()->json(['message' => 'Formation introuvable'], 404);
+            return response()->json(['message' => self::MSG_FORMATION_INTROUVABLE], 404);
         }
 
         $exists = Inscription::where('utilisateur_id', $userId)->where('formation_id', $formationId)->exists();
         if ($exists) {
-            return response()->json(['message' => 'Vous êtes déjà inscrit à cette formation.'], 422);
+            return response()->json(['message' => self::MSG_DEJA_INSCRIT], 422);
         }
 
         Inscription::create([
@@ -44,7 +48,7 @@ class InscriptionController extends Controller
 
         app(ActivityLogService::class)->logCourseEnrollment($userId, $formationId);
 
-        return response()->json(['message' => 'Inscription enregistrée.'], 201);
+        return response()->json(['message' => self::MSG_INSCRIPTION_OK], 201);
     }
 
     public function destroy(Request $request, int $formationId): JsonResponse
@@ -52,7 +56,7 @@ class InscriptionController extends Controller
         $email = $request->authUser['email'] ?? null;
         $utilisateur = $email ? Utilisateur::where('email', $email)->first() : null;
         if (! $utilisateur) {
-            return response()->json(['message' => 'Utilisateur introuvable.'], 404);
+            return response()->json(['message' => self::MSG_UTILISATEUR_INTROUVABLE], 404);
         }
         $userId = $utilisateur->id;
 

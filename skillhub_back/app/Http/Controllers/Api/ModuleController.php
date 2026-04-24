@@ -14,11 +14,15 @@ use Illuminate\Http\Request;
 
 class ModuleController extends Controller
 {
+    private const MSG_FORMATION_INTROUVABLE = 'Formation introuvable';
+    private const MSG_GESTION_FORMATION = 'Vous ne pouvez gérer que vos propres formations.';
+    private const MSG_INSCRIPTION_OBLIGATOIRE = 'Vous devez être inscrit à cette formation.';
+    private const MSG_MODULE_INVALIDE = 'Module invalide pour cette formation.';
     public function index(Request $request, int $formationId): JsonResponse
     {
         $formation = Formation::find($formationId);
         if (! $formation) {
-            return response()->json(['message' => 'Formation introuvable'], 404);
+            return response()->json(['message' => self::MSG_FORMATION_INTROUVABLE], 404);
         }
 
         $modules = FormationModule::where('formation_id', $formationId)
@@ -78,11 +82,11 @@ class ModuleController extends Controller
     {
         $formation = Formation::find($formationId);
         if (! $formation) {
-            return response()->json(['message' => 'Formation introuvable'], 404);
+            return response()->json(['message' => self::MSG_FORMATION_INTROUVABLE], 404);
         }
 
         if ($formation->id_formateur !== (int) $request->user()->id) {
-            return response()->json(['message' => 'Vous ne pouvez gérer que vos propres formations.'], 403);
+            return response()->json(['message' => self::MSG_GESTION_FORMATION], 403);
         }
 
         $data = $request->validated();
@@ -104,11 +108,11 @@ class ModuleController extends Controller
     {
         $formation = Formation::find($module->formation_id);
         if (! $formation) {
-            return response()->json(['message' => 'Formation introuvable'], 404);
+            return response()->json(['message' => self::MSG_FORMATION_INTROUVABLE], 404);
         }
 
         if ($formation->id_formateur !== (int) $request->user()->id) {
-            return response()->json(['message' => 'Vous ne pouvez gérer que vos propres formations.'], 403);
+            return response()->json(['message' => self::MSG_GESTION_FORMATION], 403);
         }
 
         $module->update($request->validated());
@@ -123,11 +127,11 @@ class ModuleController extends Controller
     {
         $formation = Formation::find($module->formation_id);
         if (! $formation) {
-            return response()->json(['message' => 'Formation introuvable'], 404);
+            return response()->json(['message' => self::MSG_FORMATION_INTROUVABLE], 404);
         }
 
         if ($formation->id_formateur !== (int) auth()->id()) {
-            return response()->json(['message' => 'Vous ne pouvez gérer que vos propres formations.'], 403);
+            return response()->json(['message' => self::MSG_GESTION_FORMATION], 403);
         }
 
         $module->delete();
@@ -138,7 +142,7 @@ class ModuleController extends Controller
     public function updateCompletion(Request $request, int $formationId, FormationModule $module): JsonResponse
     {
         if ($module->formation_id !== $formationId) {
-            return response()->json(['message' => 'Module invalide pour cette formation.'], 422);
+            return response()->json(['message' => self::MSG_MODULE_INVALIDE], 422);
         }
 
         $userId = (int) $request->user()->id;
@@ -147,7 +151,7 @@ class ModuleController extends Controller
             ->first();
 
         if (! $inscription) {
-            return response()->json(['message' => 'Vous devez être inscrit à cette formation.'], 403);
+            return response()->json(['message' => self::MSG_INSCRIPTION_OBLIGATOIRE], 403);
         }
 
         $estFait = (bool) $request->boolean('est_fait');
