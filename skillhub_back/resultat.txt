@@ -1,0 +1,13 @@
+
+
+
+
+
+
+
+   PASS  Tests\Feature\InscriptionControllerTest
+  ✓ apprenant ne peut pas etre inscrit a plus de 5 formations                                                    1.68s  
+
+  Tests:    1 passed (2 assertions)
+  Duration: 1.87s
+
