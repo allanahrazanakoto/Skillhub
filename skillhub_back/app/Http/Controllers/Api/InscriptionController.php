@@ -40,6 +40,14 @@ class InscriptionController extends Controller
             return response()->json(['message' => self::MSG_DEJA_INSCRIT], 422);
         }
 
+        // Vérifier la limite d'inscriptions actives
+        $inscriptionsActives = Inscription::where('utilisateur_id', $userId)->count();
+        if ($inscriptionsActives >= 5) {
+            return response()->json([
+                'message' => 'Un apprenant ne peut pas être inscrit à plus de 5 formations simultanément.'
+            ], 400);
+        }
+
         Inscription::create([
             'utilisateur_id' => $userId,
             'formation_id' => $formationId,
