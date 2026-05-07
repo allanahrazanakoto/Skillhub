@@ -92,19 +92,6 @@ services:
     volumes:
       - mongo-data:/data/db
 
-  frontend:
-    build:
-      context: ./skillhub_front
-      args:
-        VITE_API_URL: /api
-    container_name: skillhub_front
-    ports:
-      - "5173:80"
-    environment:
-      VITE_API_URL: /api
-    depends_on:
-      - api
-
 volumes:
   mysql-data:
   mongo-data:

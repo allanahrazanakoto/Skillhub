@@ -11,20 +11,6 @@ Le projet adopte une architecture **microservices** complète, orchestrée avec 
 ## Architecture microservices
 
 ```
-Navigateur
-    |
-    | :5173
-    v
-+------------------+
-|  skillhub_front  |  React + Vite (Nginx)
-|  Nginx proxy :   |
-|  /auth-api/ --> auth:8080
-|  /api/      --> api:8000
-+--------+---------+
-         |
-    +-----------+------------------+
-    |                              |
-    v                              v
 +------------------+   +------------------+
 |  skillhub_auth   |   |  skillhub_back   |
 |  Spring Boot     |   |  Laravel PHP 8.2 |
@@ -156,7 +142,6 @@ J'ai ajoute `name: skillhub` dans `docker-compose.yml` pour que les containers s
 |-----------|-------------|------|
 | skillhub_auth | Spring Boot Java 21 | 8080 |
 | skillhub_back | Laravel PHP 8.2 | 8000 |
-| skillhub_front | React + Nginx | 5173 |
 | skillhub_mysql | MySQL 8 | 13306 |
 | skillhub_mongo | MongoDB 7 | 27017 |
 
@@ -176,7 +161,7 @@ docker compose up -d --build
 docker compose down
 
 # Supprimer un container bloquant
-docker rm -f skillhub_mysql skillhub_auth skillhub_back skillhub_front
+docker rm -f skillhub_mysql skillhub_auth skillhub_back skillhub_mongo
 
 # Voir les logs du microservice auth
 docker logs skillhub_auth -f
@@ -197,28 +182,32 @@ php artisan key:generate
 ./vendor/bin/phpunit --log-junit reports/junit.xml
 ```
 
-### Job 2 — Frontend (React)
+### Job 2 — Auth (Spring Boot)
 ```bash
-Setup Node.js 20
-npm ci
-npm run lint     # ESLint
-npm run test     # Vitest
-npm run build    # Build Vite production
+Setup Java 21
+./mvnw test
 ```
 
-### Job 3 — Docker (apres backend + frontend)
+### Job 3 — Docker (apres backend + auth)
 ```bash
 docker compose config --quiet
 docker compose pull mysql mongo
+docker build ./skillhub_auth
 docker build ./skillhub_back
-docker build ./skillhub_front
 ```
 
-### Job 4 — CD (push GHCR)
+### Job 4 — SonarCloud
+```bash
+# Checkout complet Git pour le SCM
+# Regeneration des rapports backend et auth dans le job d'analyse
+sonar-scanner
+```
+
+### Job 5 — CD (push GHCR)
 ```bash
 # Publie les images sur GitHub Container Registry
+docker push ghcr.io/allanahrazanakoto/skillhub-auth:latest
 docker push ghcr.io/allanahrazanakoto/skillhub-api:latest
-docker push ghcr.io/allanahrazanakoto/skillhub-front:latest
 ```
 
 ---
@@ -248,10 +237,10 @@ cd skillhub_back
 | `FormationTest` | Modele Formation (unitaire) |
 | `UtilisateurTest` | Modele Utilisateur (unitaire) |
 
-### Vitest (Frontend React)
+### Maven (Microservice Auth)
 ```bash
-cd skillhub_front
-npm run test
+cd skillhub_auth
+./mvnw test
 ```
 
 ---
