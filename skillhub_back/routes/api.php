@@ -1,6 +1,6 @@
-// Constante pour éviter la duplication
-const FORMATION_ROUTE = 'formations/{formation}';
 <?php
+
+$formationRoute = 'formations/{formation}';
 
 use App\Http\Controllers\Api\CategorieFormationController;
 use App\Http\Controllers\Api\FormationController;
@@ -20,15 +20,15 @@ Route::get('formations', [FormationController::class, 'index']);
 Route::get('formations/{id}', [FormationController::class, 'show'])->whereNumber('id');
 
 // Routes protégées
-Route::middleware('auth.token')->group(function () {
+Route::middleware('auth.token')->group(function () use ($formationRoute) {
     Route::get('formations/{formationId}/modules', [ModuleController::class, 'index'])->whereNumber('formationId');
 
     // Routes formateur seulement
-    Route::middleware('formateur')->group(function () {
+    Route::middleware('formateur')->group(function () use ($formationRoute) {
         Route::post('formations', [FormationController::class, 'store']);
-        Route::put(FORMATION_ROUTE, [FormationController::class, 'update']);
-        Route::post(FORMATION_ROUTE, [FormationController::class, 'update']);
-        Route::delete(FORMATION_ROUTE, [FormationController::class, 'destroy']);
+        Route::put($formationRoute, [FormationController::class, 'update']);
+        Route::post($formationRoute, [FormationController::class, 'update']);
+        Route::delete($formationRoute, [FormationController::class, 'destroy']);
         Route::post('formations/{formationId}/modules', [ModuleController::class, 'store'])->whereNumber('formationId');
         Route::put('modules/{module}', [ModuleController::class, 'update']);
         Route::delete('modules/{module}', [ModuleController::class, 'destroy']);
