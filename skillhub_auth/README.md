@@ -1,10 +1,19 @@
 # Auth Server – TP1
 
 ## Comment lancer MySQL et configurer application.properties
-(à compléter)
+
+Le projet est configuré pour un lancement local sans Docker avec MySQL local :
+
+- hôte : `127.0.0.1`
+- port : `3306`
+- base : `authdb`
+- utilisateur : `root`
+- mot de passe : vide par défaut
+
+La base est créée automatiquement au lancement si elle n'existe pas.
 
 ## Comment lancer l'API
-mvn spring-boot:run
+`mvnw.cmd spring-boot:run`
 
 ## Comment lancer le client Java
 (à compléter)

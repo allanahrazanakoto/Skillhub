@@ -23,7 +23,7 @@ class ValidateAuthToken
 
     public function __construct()
     {
-        $this->authServiceUrl = env('AUTH_SERVICE_URL', 'http://auth:8080');
+        $this->authServiceUrl = env('AUTH_SERVICE_URL', 'http://127.0.0.1:8080');
     }
 
     public function handle(Request $request, Closure $next): Response

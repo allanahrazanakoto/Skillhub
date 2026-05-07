@@ -4,7 +4,7 @@
 
 SkillHub est une plateforme de gestion de formations en ligne. Dans le cadre du TP5, j'ai développé et intégré un **microservice d'authentification Spring Boot** qui remplace le système JWT Laravel d'origine.
 
-Le projet adopte une architecture **microservices** complète, orchestrée avec Docker Compose.
+Le projet adopte une architecture **microservices** locale, exécutée directement avec **Spring Boot + Laravel** sans Docker.
 
 ---
 
@@ -15,7 +15,7 @@ Le projet adopte une architecture **microservices** complète, orchestrée avec 
 |  skillhub_auth   |   |  skillhub_back   |
 |  Spring Boot     |   |  Laravel PHP 8.2 |
 |  Java 21         |<--|  valide token    |
-|  :8080           |   |  via auth:8080   |
+|  :8080           |   |  via localhost:8080 |
 +--------+---------+   +--------+---------+
          |                      |
          +----------+-----------+
@@ -88,7 +88,7 @@ $token = substr($authHeader, 7);
 
 // 2. Appeler Spring Boot pour valider
 $response = Http::timeout(5)
-    ->get("http://auth:8080/api/auth/validate", ['token' => $token]);
+    ->get("http://127.0.0.1:8080/api/auth/validate", ['token' => $token]);
 
 // 3. Attacher l'utilisateur a la requete
 $request->merge(['authUser' => [
@@ -130,41 +130,26 @@ L'ancien `AuthController.php` gerait JWT localement. Je l'ai supprime car l'auth
 
 ---
 
-## 4. Docker
+## 4. Execution locale
 
-### Renommage du projet
+### Services actifs
 
-J'ai ajoute `name: skillhub` dans `docker-compose.yml` pour que les containers s'appellent `skillhub_*`.
-
-### Services
-
-| Container | Technologie | Port |
-|-----------|-------------|------|
+| Service | Technologie | Port |
+|---------|-------------|------|
 | skillhub_auth | Spring Boot Java 21 | 8080 |
 | skillhub_back | Laravel PHP 8.2 | 8000 |
-| skillhub_mysql | MySQL 8 | 13306 |
-| skillhub_mongo | MongoDB 7 | 27017 |
+| MySQL local | WAMP / MySQL | 3306 |
 
 ### Commandes utilisees
 
 ```bash
-# Demarrer tous les services
-docker compose up -d
+# Lancer Spring Boot
+cd skillhub_auth
+mvnw.cmd spring-boot:run
 
-# Rebuild uniquement l'API Laravel
-docker compose up -d --build api
-
-# Rebuild tout le projet
-docker compose up -d --build
-
-# Arreter tous les containers
-docker compose down
-
-# Supprimer un container bloquant
-docker rm -f skillhub_mysql skillhub_auth skillhub_back skillhub_mongo
-
-# Voir les logs du microservice auth
-docker logs skillhub_auth -f
+# Lancer Laravel
+cd skillhub_back
+php artisan serve --host=127.0.0.1 --port=8000
 ```
 
 ---
@@ -188,26 +173,11 @@ Setup Java 21
 ./mvnw test
 ```
 
-### Job 3 — Docker (apres backend + auth)
-```bash
-docker compose config --quiet
-docker compose pull mysql mongo
-docker build ./skillhub_auth
-docker build ./skillhub_back
-```
-
-### Job 4 — SonarCloud
+### Job 3 — SonarCloud
 ```bash
 # Checkout complet Git pour le SCM
 # Regeneration des rapports backend et auth dans le job d'analyse
 sonar-scanner
-```
-
-### Job 5 — CD (push GHCR)
-```bash
-# Publie les images sur GitHub Container Registry
-docker push ghcr.io/allanahrazanakoto/skillhub-auth:latest
-docker push ghcr.io/allanahrazanakoto/skillhub-api:latest
 ```
 
 ---
@@ -281,7 +251,14 @@ git checkout dev
 ```bash
 git clone https://github.com/allanahrazanakoto/Skillhub.git
 cd Skillhub
-docker compose up -d
-# Attendre ~40 secondes que Spring Boot demarre
-# Ouvrir http://localhost:5173
+
+# Terminal 1
+cd skillhub_auth
+mvnw.cmd spring-boot:run
+
+# Terminal 2
+cd ../skillhub_back
+php artisan serve --host=127.0.0.1 --port=8000
+
+# Ouvrir http://127.0.0.1:8000/api/categories
 ```

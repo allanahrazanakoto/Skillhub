@@ -79,7 +79,7 @@ skillhub_back/
 | `php artisan migrate` | Crée ou met à jour les tables. |
 | `php artisan migrate:fresh` | Recrée la base et relance les migrations. |
 | `php artisan storage:link` | Lien `public/storage` → `storage/app/public` pour les images. |
-| `php artisan serve` | Serveur de développement sur http://localhost:8000. |
+| `php artisan serve --host=127.0.0.1 --port=8000` | Serveur de développement sur http://127.0.0.1:8000. |
 | `php artisan test` | Lance les tests PHPUnit. |
 | `php artisan test --filter FormationControllerTest` | Lance uniquement les tests FormationController. |
 | `php artisan l5-swagger:generate` | Génère la doc Swagger (OpenAPI). |
@@ -93,10 +93,10 @@ skillhub_back/
 2. `composer install`
 3. `cp .env.example .env` (ou `copy .env.example .env` sous Windows)
 4. `php artisan key:generate` puis `php artisan jwt:secret`
-5. Configurer la base dans `.env` (SQLite ou MySQL)
+5. En local sans Docker, utiliser `DB_CONNECTION=sqlite`, `DB_DATABASE=database/database.sqlite` et `AUTH_SERVICE_URL=http://127.0.0.1:8080`
 6. `php artisan migrate`
 7. `php artisan storage:link`
-8. `php artisan serve` → API sur **http://localhost:8000**
+8. `php artisan serve --host=127.0.0.1 --port=8000` → API sur **http://127.0.0.1:8000**
 
 ---
 
