@@ -46,6 +46,9 @@ jobs:
       - name: Set APP_MASTER_KEY for CI
         run: echo "APP_MASTER_KEY=test_master_key_for_ci_only" >> "$GITHUB_ENV"
 
+      - name: Ensure Maven wrapper is executable
+        run: chmod +x mvnw
+
       - name: Run Maven tests
         run: ./mvnw test
 
@@ -196,6 +199,7 @@ jobs:
         env:
           APP_MASTER_KEY: test_master_key_for_ci_only
         run: |
+          chmod +x mvnw
           ./mvnw test
 
       - name: SonarCloud Scan

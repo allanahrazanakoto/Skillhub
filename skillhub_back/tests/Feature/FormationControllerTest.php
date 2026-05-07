@@ -1,9 +1,3 @@
-    // Constantes pour éviter la duplication
-    private const API_FORMATIONS = '/api/formations';
-    private const FORMATION_PHP = 'Formation PHP';
-    private const DESCRIPTION_FORMATION = 'Description de la formation';
-    private const NOUVEAU_NOM = 'Nouveau nom';
-    private const STATUT_TERMINE = 'Terminé';
 <?php
 
 namespace Tests\Feature;
@@ -16,6 +10,12 @@ use Tests\TestCase;
 class FormationControllerTest extends TestCase
 {
     use RefreshDatabase;
+
+    private const API_FORMATIONS = '/api/formations';
+    private const FORMATION_PHP = 'Formation PHP';
+    private const DESCRIPTION_FORMATION = 'Description de la formation';
+    private const NOUVEAU_NOM = 'Nouveau nom';
+    private const STATUT_TERMINE = 'Terminé';
 
     private Utilisateur $formateur;
 
