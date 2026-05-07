@@ -201,6 +201,7 @@ jobs:
         run: |
           chmod +x mvnw
           ./mvnw test
+          ./mvnw -q dependency:copy-dependencies -DincludeScope=compile -DoutputDirectory=target/dependency
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v2
