@@ -25,10 +25,37 @@ Route::middleware('auth.token')->group(function () use ($formationRoute) {
 
     // Routes formateur seulement
     Route::middleware('formateur')->group(function () use ($formationRoute) {
+        /**
+         * Creation de formation reservee aux formateurs authentifies.
+         */
         Route::post('formations', [FormationController::class, 'store']);
+
+        /**
+         * Liste des apprenants inscrits a une formation.
+         *
+         * Cette route est reservee au formateur authentifie. Le controleur
+         * verifie ensuite qu'il est bien proprietaire de la formation cible.
+         */
+        Route::get('formations/{id}/apprenants', [FormationController::class, 'learners'])->whereNumber('id');
+
+        /**
+         * Mise a jour reservee au formateur proprietaire.
+         */
         Route::put($formationRoute, [FormationController::class, 'update']);
+
+        /**
+         * Variante POST conservee pour les formulaires multipart/form-data.
+         */
         Route::post($formationRoute, [FormationController::class, 'update']);
+
+        /**
+         * Suppression reservee au formateur proprietaire.
+         */
         Route::delete($formationRoute, [FormationController::class, 'destroy']);
+
+        /**
+         * Gestion des modules reservee au formateur.
+         */
         Route::post('formations/{formationId}/modules', [ModuleController::class, 'store'])->whereNumber('formationId');
         Route::put('modules/{module}', [ModuleController::class, 'update']);
         Route::delete('modules/{module}', [ModuleController::class, 'destroy']);

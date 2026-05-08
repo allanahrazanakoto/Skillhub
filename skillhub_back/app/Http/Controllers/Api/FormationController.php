@@ -7,6 +7,7 @@ use App\Http\Requests\StoreFormationRequest;
 use App\Http\Requests\UpdateFormationRequest;
 use App\Models\CategorieFormation;
 use App\Models\Formation;
+use App\Services\FormationApprenantService;
 use App\Services\ActivityLogService;
 use Exception;
 use Illuminate\Http\JsonResponse;
@@ -22,6 +23,11 @@ use Illuminate\Support\Str;
  */
 class FormationController extends Controller
 {
+    /**
+     * Message renvoye quand un formateur essaie d'acceder a une formation qui ne lui appartient pas.
+     */
+    private const MSG_FORMATION_NON_PROPRIETAIRE = 'Vous ne pouvez consulter que les apprenants de vos propres formations.';
+
     /**
      * Liste des formations (paginée, avec filtres optionnels).
      *
@@ -107,6 +113,54 @@ class FormationController extends Controller
         }
 
         return response()->json(['formation' => $formation]);
+    }
+
+    /**
+     * Retourne la liste des apprenants inscrits a une formation donnee.
+     *
+     * Seul le formateur proprietaire de la formation peut consulter cette vue.
+     * La reponse contient pour chaque apprenant : id, nom, email, progression
+     * et date d'inscription.
+     */
+    public function learners(Request $request, int $id, FormationApprenantService $formationApprenantService): JsonResponse
+    {
+        /**
+         * On verifie d'abord que la formation demandee existe pour pouvoir
+         * renvoyer une 404 explicite plutot qu'une liste vide trompeuse.
+         */
+        $formation = Formation::find($id);
+
+        /**
+         * Si aucune formation n'existe pour cet identifiant, on renvoie 404.
+         */
+        if (! $formation) {
+            return response()->json(['message' => 'Formation introuvable'], 404);
+        }
+
+        /**
+         * Le middleware garantit deja le role formateur. Ici on applique la
+         * regle metier supplementaire : seul le proprietaire de la formation
+         * peut consulter les apprenants inscrits.
+         */
+        /**
+         * L'utilisateur connecte est bien un formateur grace au middleware,
+         * mais il doit aussi etre le createur de la formation demandee.
+         */
+        if ($formation->id_formateur !== (int) $request->user()->id) {
+            return response()->json([
+                'message' => self::MSG_FORMATION_NON_PROPRIETAIRE,
+            ], 403);
+        }
+
+        /**
+         * Le service centralise la lecture des inscriptions et la mise en forme
+         * des donnees renvoyees au formateur.
+         */
+        /**
+         * Si toutes les conditions sont satisfaites, on delegue la construction
+         * de la reponse au service applicatif dedie.
+         */
+        return response()->json($formationApprenantService->listForFormation($formation));
     }
 
     /**
