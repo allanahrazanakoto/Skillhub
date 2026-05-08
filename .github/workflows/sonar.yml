@@ -1,0 +1,48 @@
+name: SonarCloud Analysis
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  sonarcloud:
+    name: Analyse SonarCloud
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: skillhub_back
+
+    steps:
+      - name: Checkout du code source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configuration de PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, xml, pdo_sqlite, sqlite3, bcmath, intl, openssl, zip
+          coverage: xdebug
+
+      - name: Installation des dependances PHP via Composer
+        run: composer install --no-interaction --prefer-dist --ignore-platform-req=ext-mongodb
+
+      - name: Preparation de l'environnement Laravel
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Execution des tests PHPUnit avec couverture
+        run: php artisan test --coverage-clover coverage.xml
+
+      - name: Analyse SonarCloud
+        uses: SonarSource/sonarcloud-github-action@master
+        with:
+          projectBaseDir: .
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
