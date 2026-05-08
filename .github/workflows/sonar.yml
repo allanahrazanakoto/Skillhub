@@ -38,11 +38,16 @@ jobs:
           php artisan key:generate
 
       - name: Execution des tests PHPUnit avec couverture
+        env:
+          XDEBUG_MODE: coverage
         run: php artisan test --coverage-clover coverage.xml
 
       - name: Analyse SonarCloud
         uses: SonarSource/sonarcloud-github-action@master
         with:
           projectBaseDir: .
+          args: >
+            -Dsonar.qualitygate.wait=true
+            -Dsonar.qualitygate.timeout=300
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
