@@ -64,6 +64,17 @@ class Utilisateur extends Authenticatable implements JWTSubject
         return $this->hasMany(Inscription::class);
     }
 
+    /**
+     * Relation vers les notes laissées par cet utilisateur.
+     *
+     * Elle est utilisée quand l'utilisateur joue le rôle d'apprenant et dépose
+     * un avis sur une formation suivie.
+     */
+    public function ratings(): HasMany
+    {
+        return $this->hasMany(Rating::class, 'user_id');
+    }
+
     public function isFormateur(): bool
     {
         return $this->role === 'formateur';

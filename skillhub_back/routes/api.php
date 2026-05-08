@@ -39,6 +39,14 @@ Route::middleware('auth.token')->group(function () use ($formationRoute) {
         Route::post('formations/{formationId}/inscription', [InscriptionController::class, 'store']);
         Route::delete('formations/{formationId}/inscription', [InscriptionController::class, 'destroy']);
         Route::get('apprenant/formations', [InscriptionController::class, 'index']);
+        /**
+         * Route de notation d'une formation.
+         *
+         * Elle est protégée par les middlewares auth.token et apprenant.
+         * Le contrôleur vérifie ensuite la dernière règle métier : l'apprenant
+         * doit être inscrit à la formation et ne peut noter qu'une seule fois.
+         */
+        Route::post('formations/{id}/noter', [FormationController::class, 'rate'])->whereNumber('id');
         Route::put('formations/{formationId}/progression', [InscriptionController::class, 'updateProgression']);
         Route::put('formations/{formationId}/modules/{module}/completion', [ModuleController::class, 'updateCompletion'])
             ->whereNumber('formationId');

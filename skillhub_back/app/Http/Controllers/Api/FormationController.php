@@ -7,12 +7,15 @@ use App\Http\Requests\StoreFormationRequest;
 use App\Http\Requests\UpdateFormationRequest;
 use App\Models\CategorieFormation;
 use App\Models\Formation;
+use App\Models\Inscription;
+use App\Models\Rating;
 use App\Services\ActivityLogService;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Validator;
 
 /**
  * CRUD des formations. Index = liste paginée avec meta (pour le front), show = détail.
@@ -95,18 +98,120 @@ class FormationController extends Controller
 
     /**
      * Détail d'une formation (catalogue, page formation).
+     *
+     * Cette réponse a été enrichie pour inclure les informations de notation
+     * demandées dans le sujet : moyenne des notes et nombre total d'avis.
      */
     public function show(int $id): JsonResponse
     {
+        /**
+         * On charge la formation avec ses relations habituelles et les agrégats
+         * de notation. Laravel calcule directement le nombre d'avis et la moyenne
+         * SQL via withCount/withAvg pour éviter des calculs manuels en PHP.
+         */
         $formation = Formation::with(['formateur:id,nom,prenom', 'categorie:id,libelle', 'modules'])
             ->withCount('inscriptions')
+            ->withCount('ratings as nombre_avis')
+            ->withAvg('ratings as note_moyenne', 'note')
             ->find($id);
 
         if (! $formation) {
             return response()->json(['message' => 'Formation introuvable'], 404);
         }
 
+        /**
+         * On normalise les deux champs ajoutés pour l'API :
+         * - note_moyenne est arrondie à 2 décimales
+         * - nombre_avis est forcé en entier
+         */
+        $formation->note_moyenne = $formation->note_moyenne !== null
+            ? round((float) $formation->note_moyenne, 2)
+            : null;
+        $formation->nombre_avis = (int) $formation->nombre_avis;
+
         return response()->json(['formation' => $formation]);
+    }
+
+    /**
+     * Permet à un apprenant inscrit de noter une formation une seule fois.
+     *
+     * Cette méthode applique toutes les règles métier du sujet :
+     * validation de la note, contrôle d'inscription, refus de double notation
+     * et création de l'avis avec retour JSON 201.
+     */
+    public function rate(Request $request, int $id): JsonResponse
+    {
+        /**
+         * Première sécurité : la notation n'a de sens que si la formation ciblée
+         * existe réellement dans le catalogue.
+         */
+        $formation = Formation::find($id);
+        if (! $formation) {
+            return response()->json(['message' => 'Formation introuvable'], 404);
+        }
+
+        /**
+         * Validation d'entrée demandée par l'énoncé :
+         * - note obligatoire
+         * - entier entre 1 et 5
+         * - commentaire obligatoire
+         */
+        $validator = Validator::make($request->all(), [
+            'note' => ['required', 'integer', 'between:1,5'],
+            'commentaire' => ['required', 'string'],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Données de notation invalides.',
+                'errors' => $validator->errors(),
+            ], 400);
+        }
+
+        $userId = (int) $request->user()->id;
+
+        /**
+         * Règle métier principale : seul un apprenant inscrit peut laisser un avis.
+         * La table inscriptions sert de preuve d'accès à la notation.
+         */
+        $isInscrit = Inscription::where('utilisateur_id', $userId)
+            ->where('formation_id', $formation->id)
+            ->exists();
+
+        if (! $isInscrit) {
+            return response()->json([
+                'message' => 'Vous devez être inscrit à la formation pour la noter.',
+            ], 403);
+        }
+
+        /**
+         * Deuxième règle métier : on refuse toute deuxième notation du même
+         * apprenant sur la même formation.
+         */
+        $alreadyRated = Rating::where('user_id', $userId)
+            ->where('formation_id', $formation->id)
+            ->exists();
+
+        if ($alreadyRated) {
+            return response()->json([
+                'message' => 'Vous avez déjà noté cette formation.',
+            ], 400);
+        }
+
+        /**
+         * Si toutes les conditions sont satisfaites, on crée le rating et on le
+         * renvoie immédiatement au client avec le statut HTTP 201 Created.
+         */
+        $rating = Rating::create([
+            'user_id' => $userId,
+            'formation_id' => $formation->id,
+            'note' => (int) $request->input('note'),
+            'commentaire' => $request->input('commentaire'),
+        ]);
+
+        return response()->json([
+            'rating' => $rating,
+        ], 201);
     }
 
     /**

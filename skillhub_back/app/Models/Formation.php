@@ -85,6 +85,17 @@ class Formation extends Model
         return $this->hasMany(Inscription::class);
     }
 
+    /**
+     * Relation vers les ratings de la formation.
+     *
+     * Cette relation sert à enregistrer les avis déposés par les apprenants et
+     * à calculer ensuite la moyenne et le nombre total d'avis via l'API.
+     */
+    public function ratings(): HasMany
+    {
+        return $this->hasMany(Rating::class);
+    }
+
     /** Relation : modules (chapitres) de la formation */
     public function modules(): HasMany
     {
